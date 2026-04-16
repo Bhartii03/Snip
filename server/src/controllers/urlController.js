@@ -12,7 +12,6 @@ export const createUrl = async (req, res) => {
   try {
     let shortCode = customAlias || null;
     
-    // Generate random code if no custom alias is provided
     if (!shortCode) {
       let isUnique = false;
       while (!isUnique) {
@@ -22,14 +21,12 @@ export const createUrl = async (req, res) => {
       }
     }
 
-    // Save to Database
     const { rows } = await pool.query(
       `INSERT INTO urls (original_url, short_code, custom_alias) 
        VALUES ($1, $2, $3) RETURNING *`,
       [originalUrl, customAlias ? null : shortCode, customAlias || null]
     );
 
-    // Generate Full Link and QR Code
     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
     const fullUrl = `${baseUrl}/${shortCode}`;
     const qrCode = await QRCode.toDataURL(fullUrl);
@@ -42,16 +39,13 @@ export const createUrl = async (req, res) => {
   }
 };
 
-// Add this at the bottom of urlController.js
 export const getDashboardStats = async (req, res) => {
   try {
-    // 1. Get Total URLs and Total Clicks
     const statsQuery = await pool.query(
       `SELECT COUNT(*) as total_urls, COALESCE(SUM(click_count), 0) as total_clicks 
        FROM urls`
     );
 
-    // 2. Get Clicks over time (grouped by day) for the Recharts line graph
     const chartQuery = await pool.query(
       `SELECT DATE(clicked_at) as date, COUNT(*) as clicks
        FROM clicks
@@ -60,7 +54,6 @@ export const getDashboardStats = async (req, res) => {
        LIMIT 7`
     );
 
-    // NEW: Get Top 5 Countries
     const geoQuery = await pool.query(
       `SELECT country, COUNT(*) as clicks 
        FROM clicks 
@@ -81,7 +74,6 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
-// Fetch updated click counts for the local storage sync
 export const getBatchStats = async (req, res) => {
   try {
     const { ids } = req.body;
@@ -90,7 +82,6 @@ export const getBatchStats = async (req, res) => {
       return res.json([]);
     }
 
-    // This Postgres query efficiently fetches data for an array of IDs at once
     const { rows } = await pool.query(
       `SELECT id, click_count FROM urls WHERE id = ANY($1::uuid[])`,
       [ids]

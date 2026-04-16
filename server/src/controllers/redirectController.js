@@ -12,34 +12,47 @@ export const handleRedirect = async (req, res) => {
   const { code } = req.params;
 
   try {
-    // 1. Check Redis Cache First (~1ms response time)
-    const cachedUrl = await redis.get(`url:${code}`);
-    if (cachedUrl) {
-      const { original_url, id } = JSON.parse(cachedUrl);
-      res.redirect(original_url);
-      logClickAsync(id, req); // Log click in background
-      return;
+    // 1. ISOLATED CACHE READ - If this fails, we just pretend it was a cache miss!
+    let cachedUrl = null;
+    try {
+      cachedUrl = await redis.get(code);
+    } catch (redisErr) {
+      console.warn("⚠️ Cache read failed, degrading to PostgreSQL:", redisErr.message);
     }
 
-    // 2. Cache Miss: Check PostgreSQL Database
+    // If we found it in the cache, redirect instantly
+    if (cachedUrl) {
+      logClickAsync(code, req); // Make sure this matches how your analytics logging works!
+      return res.redirect(cachedUrl);
+    }
+
+    // 2. THE FALLBACK - Get it from the database
     const { rows } = await pool.query(
-      `SELECT id, original_url FROM urls WHERE short_code = $1 OR custom_alias = $1`,
+      'SELECT id, original_url FROM urls WHERE short_code = $1 OR custom_alias = $1', 
       [code]
     );
 
-    if (rows.length === 0) return res.status(404).json({ error: 'URL not found' });
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Link not found' });
+    }
 
-    const urlData = rows[0];
+    const originalUrl = rows[0].original_url;
+    const urlId = rows[0].id;
 
-    // 3. Save to Cache for next time (Expires in 1 hour) & Redirect
-    await redis.setex(`url:${code}`, 3600, JSON.stringify(urlData));
-    res.redirect(urlData.original_url);
-    
-    // 4. Log click in background
-    logClickAsync(urlData.id, req);
+    // 3. ISOLATED CACHE WRITE - If Redis is down, we don't care if this fails.
+    try {
+      await redis.set(code, originalUrl);
+    } catch (redisErr) {
+      console.warn("⚠️ Cache write failed, moving on:", redisErr.message);
+    }
 
-  } catch (error) {
-    console.error("🔥 REDIRECT ERROR:", error);
-    res.status(500).json({ error: 'Server error' });
+    // 4. Track and Redirect
+    logClickAsync(urlId, req); 
+    return res.redirect(originalUrl);
+
+  } catch (err) {
+    // This will now ONLY trigger if PostgreSQL completely dies.
+    console.error("🔥 FATAL REDIRECT ERROR:", err);
+    res.status(500).json({ error: "Server error" });
   }
 };
