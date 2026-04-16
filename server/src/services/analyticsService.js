@@ -15,10 +15,8 @@ export const logClickAsync = (urlId, req) => {
       let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       
       // 2. [DEV MODE] If testing locally, fake a public IP so we can see the map work!
-      if (ip === '::1' || ip === '127.0.0.1') {
-         // Random IPs from Tokyo, London, New York, and Sydney
-         const globalIps = ['133.3.250.1', '81.2.69.142', '69.89.31.226', '103.25.56.1'];
-         ip = globalIps[Math.floor(Math.random() * globalIps.length)];
+      if (typeof ip === 'string' && ip.includes(',')) {
+         ip = ip.split(',')[0].trim();
       }
 
       // 3. Translate IP to Location
