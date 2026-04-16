@@ -29,7 +29,7 @@ SNIP is a highly performant, full-stack URL shortening service built with a focu
 
 1. **Clone the repository**
    ```bash
-   git clone [https://github.com/yourusername/snip.git](https://github.com/yourusername/snip.git)
+   git clone [https://github.com/Bhartii03/Snip.git](https://github.com/Bhartii03/Snip.git)
    cd snip
    ```
 2. **Boot the infrastructure**  
