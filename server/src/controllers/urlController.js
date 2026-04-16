@@ -30,7 +30,8 @@ export const createUrl = async (req, res) => {
     );
 
     // Generate Full Link and QR Code
-    const fullUrl = `http://localhost:5000/${shortCode}`;
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    const fullUrl = `${baseUrl}/${shortCode}`;
     const qrCode = await QRCode.toDataURL(fullUrl);
 
     res.status(201).json({ url: rows[0], fullUrl, qrCode });
