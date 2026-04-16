@@ -43,8 +43,9 @@ pool.query('SELECT NOW()').then(async () => {
 
 
 const redis = new Redis(process.env.REDIS_URL);
-redis.on('connect', () => console.log('✅ Connected to Redis'));
 
+redis.on('connect', () => console.log('✅ Connected to Redis'));
+redis.on('error', (err) => console.warn('Redis warning ignored:', err.message));
 // 2. Use Routes
 app.use('/', routes);
 

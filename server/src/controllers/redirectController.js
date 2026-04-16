@@ -6,6 +6,7 @@ import { logClickAsync } from '../services/analyticsService.js';
 dotenv.config();
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const redis = new Redis(process.env.REDIS_URL);
+redis.on('error', (err) => console.warn('Redis warning ignored:', err.message));
 
 export const handleRedirect = async (req, res) => {
   const { code } = req.params;
