@@ -2,7 +2,10 @@ import Redis from 'ioredis';
 import dotenv from 'dotenv';
 
 dotenv.config();
-const redis = new Redis(process.env.REDIS_URL);
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: 1, // Don't keep retrying forever
+  connectTimeout: 3000,    // Give up after 3 seconds
+});
 redis.on('error', (err) => console.warn('Redis warning ignored:', err.message));
 // Limit: 20 requests per minute per IP
 const RATE_LIMIT = 20;
