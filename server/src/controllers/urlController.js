@@ -1,0 +1,103 @@
+import pg from 'pg';
+import dotenv from 'dotenv';
+import { generateBase62 } from '../utils/base62.js';
+import QRCode from 'qrcode';
+
+dotenv.config();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+export const createUrl = async (req, res) => {
+  const { originalUrl, customAlias } = req.body;
+  
+  try {
+    let shortCode = customAlias || null;
+    
+    // Generate random code if no custom alias is provided
+    if (!shortCode) {
+      let isUnique = false;
+      while (!isUnique) {
+        shortCode = generateBase62();
+        const check = await pool.query('SELECT id FROM urls WHERE short_code = $1', [shortCode]);
+        if (check.rows.length === 0) isUnique = true;
+      }
+    }
+
+    // Save to Database
+    const { rows } = await pool.query(
+      `INSERT INTO urls (original_url, short_code, custom_alias) 
+       VALUES ($1, $2, $3) RETURNING *`,
+      [originalUrl, customAlias ? null : shortCode, customAlias || null]
+    );
+
+    // Generate Full Link and QR Code
+    const fullUrl = `http://localhost:5000/${shortCode}`;
+    const qrCode = await QRCode.toDataURL(fullUrl);
+
+    res.status(201).json({ url: rows[0], fullUrl, qrCode });
+  } catch (error) {
+    console.error("🔥 DB ERROR:", error);
+    if (error.code === '23505') return res.status(409).json({ error: 'Alias already exists' });
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Add this at the bottom of urlController.js
+export const getDashboardStats = async (req, res) => {
+  try {
+    // 1. Get Total URLs and Total Clicks
+    const statsQuery = await pool.query(
+      `SELECT COUNT(*) as total_urls, COALESCE(SUM(click_count), 0) as total_clicks 
+       FROM urls`
+    );
+
+    // 2. Get Clicks over time (grouped by day) for the Recharts line graph
+    const chartQuery = await pool.query(
+      `SELECT DATE(clicked_at) as date, COUNT(*) as clicks
+       FROM clicks
+       GROUP BY DATE(clicked_at)
+       ORDER BY date DESC 
+       LIMIT 7`
+    );
+
+    // NEW: Get Top 5 Countries
+    const geoQuery = await pool.query(
+      `SELECT country, COUNT(*) as clicks 
+       FROM clicks 
+       WHERE country IS NOT NULL AND country != 'Unknown'
+       GROUP BY country 
+       ORDER BY clicks DESC 
+       LIMIT 5`
+    );
+
+    res.json({
+      stats: statsQuery.rows[0],
+      chartData: chartQuery.rows.reverse(),
+      geoData: geoQuery.rows 
+    });
+  } catch (error) {
+    console.error("🔥 STATS ERROR:", error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Fetch updated click counts for the local storage sync
+export const getBatchStats = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.json([]);
+    }
+
+    // This Postgres query efficiently fetches data for an array of IDs at once
+    const { rows } = await pool.query(
+      `SELECT id, click_count FROM urls WHERE id = ANY($1::uuid[])`,
+      [ids]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("🔥 BATCH STATS ERROR:", error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};

@@ -1,0 +1,16 @@
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment Variables (NEVER UPLOAD THESE!)
+.env
+server/.env
+client/.env
+
+# Build outputs
+client/dist/
+
+# OS generated files
+.DS_Store
+Thumbs.db
