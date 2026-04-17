@@ -86,9 +86,9 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* NEW: Global Origins Bar Chart */}
+        {/* NEW: City Origins Bar Chart */}
         <div className="bg-[#0a0a0a] p-8 border border-gray-800 h-[400px]">
-          <h3 className="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-8">Global Origins</h3>
+          <h3 className="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-8">Top Cities</h3>
           {data.geoData.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-700 text-xs font-mono uppercase tracking-widest">
               Awaiting Geographic Data...
@@ -98,7 +98,8 @@ export default function Dashboard() {
               <BarChart data={data.geoData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#1f2937" />
                 <XAxis type="number" hide />
-                <YAxis dataKey="country" type="category" tick={{fill: '#6b7280', fontSize: 12, fontFamily: 'monospace'}} stroke="#374151" axisLine={false} tickLine={false} />
+                {/* Changed dataKey to "location" to match our new SQL query */}
+                <YAxis dataKey="location" type="category" tick={{fill: '#6b7280', fontSize: 12, fontFamily: 'monospace'}} stroke="#374151" axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} cursor={{fill: '#111'}} />
                 <Bar dataKey="clicks" fill="#c6ff00" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
