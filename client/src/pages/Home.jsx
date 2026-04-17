@@ -249,22 +249,31 @@ export default function Home() {
       )}
 
       {/* Architecture Grid */}
-      <div className="max-w-3xl mx-auto mt-24 border-t border-gray-900 pt-16 mb-20">
+      <div className="max-w-5xl mx-auto mt-24 border-t border-gray-900 pt-16 mb-20">
         <div className="flex justify-between items-end mb-8">
           <h3 className="text-xs text-gray-500 tracking-[0.2em] uppercase font-bold">System Architecture</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-gray-900">
+        
+        {/* Simplified border logic: Top/Left on parent, Bottom/Right on children */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-l border-gray-900">
           {[
-            { step: '01', title: 'Hashing Engine', desc: 'Base62 encoding generating 7-char collision-safe unique URLs.', tags: ['BASE62', 'COLLISION-SAFE'] },
-            { step: '02', title: 'Storage Layer', desc: 'Redis for L1 cache layer. PostgreSQL for persistence and relations.', tags: ['REDIS', 'POSTGRESQL'] },
-            { step: '03', title: 'Redirect API', desc: 'HTTP 301/302 redirects with asynchronous background click tracking.', tags: ['REST API', 'ANALYTICS'] }
+            { step: '01', title: 'Hashing Engine', desc: 'Base62 encoding with collision-resistant database constraints.', tags: ['BASE62', 'COLLISION-SAFE'] },
+            { step: '02', title: 'Storage Layer', desc: 'Redis handles L1 caching. PostgreSQL ensures ACID persistence.', tags: ['REDIS', 'POSTGRESQL'] },
+            { step: '03', title: 'Redirect API', desc: 'HTTP 302 redirects decoupled from async telemetry background workers.', tags: ['REST API', 'HTTP 302', 'ASYNC'] },
+            { step: '04', title: 'Rate Limiting', desc: 'Token bucket strategy prevents automated abuse via Redis TTL counters.', tags: ['TOKEN BUCKET', 'REDIS TTL'] },
+            { step: '05', title: 'Analytics Engine', desc: 'Real-time IP-to-city geolocation mapping without blocking the redirect.', tags: ['GEO-IP', 'EVENT LOOP'] },
+            { step: '06', title: 'Scalability', desc: 'Stateless Node.js backend with cache-aside graceful degradation.', tags: ['STATELESS', 'FAIL-SAFE'] }
           ].map((item, i) => (
-            <div key={i} className={`p-8 border-gray-900 ${i !== 2 ? 'border-b md:border-b-0 md:border-r' : ''}`}>
+            <div key={i} className="p-8 border-b border-r border-gray-900 hover:bg-[#0a0a0a] transition-colors duration-300">
               <h4 className="text-4xl font-black text-[#1a1a1a] mb-4 font-sans">{item.step}</h4>
               <h5 className="text-white font-bold mb-2 text-sm">{item.title}</h5>
               <p className="text-gray-500 text-xs leading-relaxed mb-6 h-12">{item.desc}</p>
-              <div className="flex gap-2 text-[9px] font-bold tracking-widest text-[#c6ff00]">
-                {item.tags.map(tag => <span key={tag} className="border border-[#c6ff00]/30 px-2 py-1 bg-[#c6ff00]/5">{tag}</span>)}
+              
+              {/* Added flex-wrap just in case tags get too long on mobile */}
+              <div className="flex flex-wrap gap-2 text-[9px] font-bold tracking-widest text-[#c6ff00]">
+                {item.tags.map(tag => (
+                  <span key={tag} className="border border-[#c6ff00]/30 px-2 py-1 bg-[#c6ff00]/5">{tag}</span>
+                ))}
               </div>
             </div>
           ))}
