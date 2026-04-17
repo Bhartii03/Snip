@@ -18,17 +18,22 @@ export default function Dashboard() {
     );
   }
 
-  // Custom Tooltip for the dark theme
+  // Custom Tooltip with safe date parsing
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // NEW: Format the ugly database date string into "Apr 16, 2026"
-      const formattedDate = new Date(label).toLocaleDateString(undefined, { 
-        month: 'short', day: 'numeric', year: 'numeric' 
-      });
+      
+      // Safely try to format the date. If it fails, just use the raw label.
+      let displayDate = label;
+      const parsedDate = new Date(label);
+      if (!isNaN(parsedDate)) {
+        displayDate = parsedDate.toLocaleDateString(undefined, { 
+          month: 'short', day: 'numeric', year: 'numeric' 
+        });
+      }
 
       return (
         <div className="bg-[#050505] border border-[#333] p-3 text-xs font-mono text-white">
-          <p className="text-gray-500 mb-1">{formattedDate}</p>
+          <p className="text-gray-500 mb-1">{displayDate}</p>
           <p className="text-[#c6ff00] font-bold">{payload[0].value} redirects</p>
         </div>
       );
@@ -95,7 +100,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.geoData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <BarChart data={data.geoData} layout="vertical" margin={{ top: 0, right: 0, left: 60, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#1f2937" />
                 <XAxis type="number" hide />
                 {/* Changed dataKey to "location" to match our new SQL query */}
