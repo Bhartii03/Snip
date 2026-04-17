@@ -93,7 +93,7 @@ export default function Dashboard() {
 
         {/* NEW: City Origins Bar Chart */}
         <div className="bg-[#0a0a0a] p-8 border border-gray-800 h-[400px]">
-          <h3 className="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-8">Top Cities</h3>
+          <h3 className="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-8">Top Location</h3>
           {data.geoData.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-700 text-xs font-mono uppercase tracking-widest">
               Awaiting Geographic Data...
