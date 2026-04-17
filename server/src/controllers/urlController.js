@@ -55,10 +55,15 @@ export const getDashboardStats = async (req, res) => {
     );
 
     const geoQuery = await pool.query(
-      `SELECT city as location, COUNT(*) as clicks 
+      `SELECT 
+         CASE 
+           WHEN city IS NOT NULL AND city != '' THEN city
+           ELSE country 
+         END as location, 
+         COUNT(*) as clicks 
        FROM clicks 
-       WHERE city IS NOT NULL AND city != 'Unknown' AND city != ''
-       GROUP BY city 
+       WHERE country IS NOT NULL AND country != 'Unknown' AND country != ''
+       GROUP BY location 
        ORDER BY clicks DESC 
        LIMIT 5`
     );
